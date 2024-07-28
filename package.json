@@ -10,11 +10,13 @@
     "debug": "NODE_OPTIONS='--inspect' next dev"
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.2.2",
     "hono": "^4.5.2",
     "next": "14.2.5",
     "openai": "^4.53.2",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "zod-form-data": "^2.0.2"
   },
   "devDependencies": {
     "@types/node": "^20",
