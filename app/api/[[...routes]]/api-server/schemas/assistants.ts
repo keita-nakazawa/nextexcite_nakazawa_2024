@@ -1,35 +1,35 @@
 import { z } from "zod";
 import { zfd } from "zod-form-data";
 
-export const createAssistantSchema = z.object({
+export const createAssistantReqSchema = z.object({
   name: z.string(),
   description: z.string(),
   instructions: z.string(),
   model: z.string().default("gpt-4o-mini"),
 });
 
-export const createThreadSchema = z.object({});
+export const createThreadReqSchema = z.object({});
 
-export const addMessageSchema = z.object({
+export const addMessageReqSchema = z.object({
   threadId: z.string(),
   content: z.string(),
   fileIds: z.array(z.string()).optional(),
 });
 
-export const runAssistantSchema = z.object({
+export const runAssistantReqSchema = z.object({
   assistantId: z.string(),
   threadId: z.string(),
 });
 
-export const getRunStatusSchema = z.object({
+export const getRunStatusReqSchema = z.object({
   threadId: z.string(),
   runId: z.string(),
 });
 
-export const getMessagesSchema = z.object({
+export const getMessagesReqSchema = z.object({
   threadId: z.string(),
 });
 
-export const uploadFileSchema = z.object({
+export const uploadFileReqSchema = z.object({
   file: zfd.file(),
 });

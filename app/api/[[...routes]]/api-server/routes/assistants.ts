@@ -8,7 +8,7 @@ import * as openaiService from "../services/openai-service";
 const factory = createFactory();
 
 export const createAssistant = factory.createHandlers(
-  zValidator("json", schemas.createAssistantSchema),
+  zValidator("json", schemas.createAssistantReqSchema),
   async (c) => {
     const { name, description, instructions, model } = c.req.valid("json");
     const assistant = await openaiService.createAssistant(name, description, instructions, model);
@@ -18,7 +18,7 @@ export const createAssistant = factory.createHandlers(
 );
 
 export const createThread = factory.createHandlers(
-  zValidator("json", schemas.createThreadSchema),
+  zValidator("json", schemas.createThreadReqSchema),
   async (c) => {
     const thread = await openaiService.createThread();
     const response = thread as ThreadType;
@@ -27,7 +27,7 @@ export const createThread = factory.createHandlers(
 );
 
 export const addMessage = factory.createHandlers(
-  zValidator("json", schemas.addMessageSchema),
+  zValidator("json", schemas.addMessageReqSchema),
   async (c) => {
     const { threadId, content, fileIds } = c.req.valid("json");
     const message = await openaiService.addMessage(threadId, content, fileIds);
@@ -37,7 +37,7 @@ export const addMessage = factory.createHandlers(
 );
 
 export const runAssistant = factory.createHandlers(
-  zValidator("json", schemas.runAssistantSchema),
+  zValidator("json", schemas.runAssistantReqSchema),
   async (c) => {
     const { assistantId, threadId } = c.req.valid("json");
     const run = await openaiService.runAssistant(assistantId, threadId);
@@ -47,7 +47,7 @@ export const runAssistant = factory.createHandlers(
 );
 
 export const getRunStatus = factory.createHandlers(
-  zValidator("json", schemas.getRunStatusSchema),
+  zValidator("json", schemas.getRunStatusReqSchema),
   async (c) => {
     const { threadId, runId } = c.req.valid("json");
     const run = await openaiService.getRunStatus(threadId, runId);
@@ -57,7 +57,7 @@ export const getRunStatus = factory.createHandlers(
 );
 
 export const getMessages = factory.createHandlers(
-  zValidator("param", schemas.getMessagesSchema),
+  zValidator("param", schemas.getMessagesReqSchema),
   async (c) => {
     const { threadId } = c.req.valid("param");
     const messages = await openaiService.getMessages(threadId);
@@ -67,7 +67,7 @@ export const getMessages = factory.createHandlers(
 );
 
 export const uploadFile = factory.createHandlers(
-  zValidator("form", schemas.uploadFileSchema),
+  zValidator("form", schemas.uploadFileReqSchema),
   async (c) => {
     const { file } = c.req.valid("form");
     const uploadedFile = await openaiService.uploadFile(file);
