@@ -8,8 +8,6 @@ export const createAssistantReqSchema = z.object({
   model: z.string().default("gpt-4o-mini"),
 });
 
-export const createThreadReqSchema = z.object({});
-
 export const addMessageReqSchema = z.object({
   threadId: z.string(),
   content: z.string(),

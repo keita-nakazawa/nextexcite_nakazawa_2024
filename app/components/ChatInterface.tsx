@@ -1,8 +1,9 @@
 "use client";
+import { RunStatus } from "openai/resources/beta/threads/index.mjs";
 import { TextContentBlock } from "openai/resources/beta/threads/messages.mjs";
 import React, { useEffect, useState } from "react";
 import { AssistantType, FileObjectType, MessageType, ThreadType } from "../constants/type";
-import { apiClient } from "../lib/api-client";
+import { client } from "../lib/client";
 
 const ChatInterface = () => {
   const [assistants, setAssistants] = useState<AssistantType[]>([]);
@@ -21,8 +22,8 @@ const ChatInterface = () => {
 
   const createInitialAssistant = async () => {
     try {
-      const res = await apiClient.api.assistants.create_assistant.$post({
-        json: { name: "Default Assistant", description: "", instructions: "" }
+      const res = await client.api.assistants.create_assistant.$post({
+        json: { name: "Default Assistant", description: "", instructions: "" },
       });
       const newAssistant = await res.json();
       setAssistants([newAssistant]);
@@ -34,8 +35,8 @@ const ChatInterface = () => {
 
   const createNewThread = async () => {
     try {
-      const res = await apiClient.api.assistants.create_thread.$post({
-        json: {}
+      const res = await client.api.assistants.create_thread.$post({
+        json: {},
       });
       const thread = await res.json();
       setThread(thread);
@@ -51,22 +52,22 @@ const ChatInterface = () => {
     setError(null);
 
     try {
-      const resMes = await apiClient.api.assistants.add_message.$post({
-        json: { threadId: thread.id, content: inputMessage, fileIds: files.map(file => file.id) }
+      const resMes = await client.api.assistants.add_message.$post({
+        json: { threadId: thread.id, content: inputMessage, fileIds: files.map((file) => file.id) },
       });
       const newMessage = await resMes.json();
       setMessages([...messages, newMessage]);
       setInputMessage("");
       setFiles([]);
 
-      const resRun = await apiClient.api.assistants.run_assistant.$post({
-        json: { threadId: thread.id, assistantId: selectedAssistant.id }
+      const resRun = await client.api.assistants.run_assistant.$post({
+        json: { threadId: thread.id, assistantId: selectedAssistant.id },
       });
       const run = await resRun.json();
       await pollRunStatus(thread.id, run.id);
 
-      const resMesList = await apiClient.api.assistants.messages[":threadId"].$get({
-        param: { threadId: thread.id }
+      const resMesList = await client.api.assistants.messages[":threadId"].$get({
+        param: { threadId: thread.id },
       });
       const threadMessages = await resMesList.json();
       setMessages(threadMessages.reverse());
@@ -78,17 +79,22 @@ const ChatInterface = () => {
   };
 
   const pollRunStatus = async (threadId: string, runId: string) => {
-    let status = "queued";
-    while (status !== "completed" && status !== "failed") {
-      const resRun = await apiClient.api.assistants.get_run_status.$post({
-        json: { threadId, runId }
+    let status: RunStatus = "queued";
+    while (status !== "completed") {
+      const resRun = await client.api.assistants.get_run_status.$post({
+        json: { threadId, runId },
       });
       const run = await resRun.json();
       status = run.status;
-      if (status === "failed") {
-        throw new Error("Run failed");
+      if (
+        status === "failed" ||
+        status === "expired" ||
+        status === "cancelled" ||
+        status === "incomplete"
+      ) {
+        throw new Error(`Run ended with status: ${status}`);
       }
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   };
 
@@ -100,8 +106,8 @@ const ChatInterface = () => {
     setError(null);
 
     try {
-      const res = await apiClient.api.assistants.upload_file.$post({
-        form: { file }
+      const res = await client.api.assistants.upload_file.$post({
+        form: { file },
       });
       const uploadedFile = await res.json();
       setFiles([...files, uploadedFile]);
@@ -118,8 +124,8 @@ const ChatInterface = () => {
     const instructions = prompt("Enter assistant instructions:");
     if (name && description && instructions) {
       try {
-        const res = await apiClient.api.assistants.create_assistant.$post({
-          json: { name, description, instructions }
+        const res = await client.api.assistants.create_assistant.$post({
+          json: { name, description, instructions },
         });
         const newAssistant = await res.json();
         setAssistants([...assistants, newAssistant]);
@@ -135,10 +141,14 @@ const ChatInterface = () => {
       <div className="assistant-selection">
         <select
           value={selectedAssistant?.id || ""}
-          onChange={(e) => setSelectedAssistant(assistants.find(a => a.id === e.target.value) || null)}
+          onChange={(e) =>
+            setSelectedAssistant(assistants.find((a) => a.id === e.target.value) || null)
+          }
         >
-          {assistants.map(assistant => (
-            <option key={assistant.id} value={assistant.id}>{assistant.name}</option>
+          {assistants.map((assistant) => (
+            <option key={assistant.id} value={assistant.id}>
+              {assistant.name}
+            </option>
           ))}
         </select>
         <button onClick={handleCreateAssistant}>Create New Assistant</button>
@@ -146,7 +156,7 @@ const ChatInterface = () => {
       <div className="message-list">
         {messages.map((message, index) => (
           <div key={index} className={`message ${message.role}`}>
-            {message.attachments?.map(attachment => `${attachment.file_id}¥n`)}
+            {message.attachments?.map((attachment) => `${attachment.file_id}¥n`)}
             {(message.content[0] as TextContentBlock).text.value}
           </div>
         ))}
@@ -160,8 +170,11 @@ const ChatInterface = () => {
           placeholder="Type your message..."
           disabled={isLoading}
         />
-        <button onClick={handleSendMessage} disabled={isLoading}>Send</button>
-        <input type="file" onChange={handleFileUpload} disabled={isLoading} />  {/* なんかEdgeだと反応しない場合がある？ */}
+        <button onClick={handleSendMessage} disabled={isLoading}>
+          Send
+        </button>
+        <input type="file" onChange={handleFileUpload} disabled={isLoading} />{" "}
+        {/* なんかEdgeだと反応しない場合がある？ */}
       </div>
       {isLoading && <div className="loading">Loading...</div>}
     </div>

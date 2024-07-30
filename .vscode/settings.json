@@ -6,11 +6,13 @@
     "source.addMissingImports": "explicit"
   },
   "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
   "tailwindCSS.experimental.classRegex": [
-    [
-      "tv\\(([^)]*)\\)",
-      "[\"'`]([^\"'`]*).*?[\"'`]"
-    ], // tv()内の文字列に対して補完
+    ["tv\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"] // tv()内の文字列に対して補完
     // ["([\"'`][^\"'`]*.*?[\"'`])", "[\"'`]([^\"'`]*).*?[\"'`]"],  //すべての文字列に対して補完
   ],
+  "python.analysis.typeCheckingMode": "basic"
 }

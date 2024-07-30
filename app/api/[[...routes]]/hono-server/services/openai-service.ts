@@ -5,7 +5,12 @@ export const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export const createAssistant = async (name: string, description: string, instructions: string, model: string) => {
+export const createAssistant = async (
+  name: string,
+  description: string,
+  instructions: string,
+  model: string,
+) => {
   return await openai.beta.assistants.create({
     name,
     description,
@@ -23,9 +28,13 @@ export const addMessage = async (threadId: string, content: string, fileIds: str
   return await openai.beta.threads.messages.create(threadId, {
     role: "user",
     content,
-    attachments: fileIds.length > 0
-      ? fileIds.map(id => ({ file_id: id, tools: [{ type: OpenAITools.CODE_INTERPRETER }, { type: OpenAITools.FILE_SEARCH }] }))
-      : [],
+    attachments:
+      fileIds.length > 0
+        ? fileIds.map((id) => ({
+            file_id: id,
+            tools: [{ type: OpenAITools.CODE_INTERPRETER }, { type: OpenAITools.FILE_SEARCH }],
+          }))
+        : [],
   });
 };
 

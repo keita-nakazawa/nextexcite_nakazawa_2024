@@ -1,4 +1,10 @@
-import { AssistantType, MessageType, RunType, ThreadType } from "@/app/constants/type";
+import {
+  AssistantType,
+  FileObjectType,
+  MessageType,
+  RunType,
+  ThreadType,
+} from "@/app/constants/type";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
@@ -7,72 +13,70 @@ import * as openaiService from "../services/openai-service";
 
 const factory = createFactory();
 
-export const createAssistant = factory.createHandlers(
+const createAssistant = factory.createHandlers(
   zValidator("json", schemas.createAssistantReqSchema),
   async (c) => {
     const { name, description, instructions, model } = c.req.valid("json");
     const assistant = await openaiService.createAssistant(name, description, instructions, model);
     const response = assistant as AssistantType;
     return c.json(response);
-  }
+  },
 );
 
-export const createThread = factory.createHandlers(
-  zValidator("json", schemas.createThreadReqSchema),
-  async (c) => {
-    const thread = await openaiService.createThread();
-    const response = thread as ThreadType;
-    return c.json(response);
-  }
-);
+const createThread = factory.createHandlers(async (c) => {
+  const thread = await openaiService.createThread();
+  const response = thread as ThreadType;
+  return c.json(response);
+});
 
-export const addMessage = factory.createHandlers(
+const addMessage = factory.createHandlers(
   zValidator("json", schemas.addMessageReqSchema),
   async (c) => {
     const { threadId, content, fileIds } = c.req.valid("json");
     const message = await openaiService.addMessage(threadId, content, fileIds);
     const response = message as MessageType;
     return c.json(response);
-  }
+  },
 );
 
-export const runAssistant = factory.createHandlers(
+const runAssistant = factory.createHandlers(
   zValidator("json", schemas.runAssistantReqSchema),
   async (c) => {
     const { assistantId, threadId } = c.req.valid("json");
     const run = await openaiService.runAssistant(assistantId, threadId);
     const response = run as RunType;
     return c.json(response);
-  }
+  },
 );
 
-export const getRunStatus = factory.createHandlers(
+const getRunStatus = factory.createHandlers(
   zValidator("json", schemas.getRunStatusReqSchema),
   async (c) => {
     const { threadId, runId } = c.req.valid("json");
     const run = await openaiService.getRunStatus(threadId, runId);
     const response = run as RunType;
     return c.json(response);
-  }
+  },
 );
 
-export const getMessages = factory.createHandlers(
+const getMessages = factory.createHandlers(
   zValidator("param", schemas.getMessagesReqSchema),
   async (c) => {
     const { threadId } = c.req.valid("param");
     const messages = await openaiService.getMessages(threadId);
     const response = messages as MessageType[];
     return c.json(response);
-  }
+  },
 );
 
-export const uploadFile = factory.createHandlers(
+const uploadFile = factory.createHandlers(
   zValidator("form", schemas.uploadFileReqSchema),
   async (c) => {
     const { file } = c.req.valid("form");
-    const uploadedFile = await openaiService.uploadFile(file);
-    return c.json(uploadedFile);
-  }
+    const fileObject = await openaiService.uploadFile(file);
+    const response = fileObject as FileObjectType;
+    return c.json(response);
+  },
 );
 
 // assistants api用のエンドポイントを設定
