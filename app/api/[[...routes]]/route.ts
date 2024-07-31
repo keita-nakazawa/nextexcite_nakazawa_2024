@@ -1,11 +1,10 @@
-import { API_BASE_PATH } from "@/app/constants/const";
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
 import { assistantsRoute } from "./hono-server/routes/assistants";
 
 export const runtime = "nodejs";
 
-const app = new Hono().basePath(API_BASE_PATH);
+const app = new Hono().basePath("/api");
 // 各route(controller)を登録
 const apiRoutes = app.route("/assistants", assistantsRoute);
 

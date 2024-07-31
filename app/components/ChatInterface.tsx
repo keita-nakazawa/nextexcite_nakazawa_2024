@@ -3,7 +3,7 @@ import { RunStatus } from "openai/resources/beta/threads/index.mjs";
 import { TextContentBlock } from "openai/resources/beta/threads/messages.mjs";
 import React, { useEffect, useState } from "react";
 import { AssistantType, FileObjectType, MessageType, ThreadType } from "../constants/type";
-import { client } from "../lib/client";
+import client from "../lib/client";
 
 const ChatInterface = () => {
   const [assistants, setAssistants] = useState<AssistantType[]>([]);
