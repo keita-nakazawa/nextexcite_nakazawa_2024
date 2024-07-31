@@ -1,7 +1,7 @@
 import type { AppType } from "@/app/api/[[...routes]]/route";
 import { hc } from "hono/client";
 
-export const client = hc<AppType>("");
+const client = hc<AppType>("");
 
 /**
  * 使い方の例
@@ -11,3 +11,5 @@ export const client = hc<AppType>("");
  * });
  */
 export const createClient = (init?: RequestInit) => hc<AppType>("", { init });
+
+export default client;
