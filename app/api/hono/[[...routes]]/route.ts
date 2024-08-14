@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
-import { assistantsRoute } from "./hono-server/routes/assistants";
+import { assistantsRoute } from "./routes/assistants";
 
 export const runtime = "nodejs";
 
-const app = new Hono().basePath("/api");
+const app = new Hono().basePath("/api/hono");
 // 各route(controller)を登録
 const apiRoutes = app.route("/assistants", assistantsRoute);
 

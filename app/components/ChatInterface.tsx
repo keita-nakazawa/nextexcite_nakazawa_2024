@@ -22,7 +22,7 @@ const ChatInterface = () => {
 
   const createInitialAssistant = async () => {
     try {
-      const res = await client.api.assistants.create_assistant.$post({
+      const res = await client.api.hono.assistants.create_assistant.$post({
         json: { name: "Default Assistant", description: "", instructions: "" },
       });
       const newAssistant = await res.json();
@@ -35,7 +35,7 @@ const ChatInterface = () => {
 
   const createNewThread = async () => {
     try {
-      const res = await client.api.assistants.create_thread.$post({
+      const res = await client.api.hono.assistants.create_thread.$post({
         json: {},
       });
       const thread = await res.json();
@@ -52,7 +52,7 @@ const ChatInterface = () => {
     setError(null);
 
     try {
-      const resMes = await client.api.assistants.add_message.$post({
+      const resMes = await client.api.hono.assistants.add_message.$post({
         json: { threadId: thread.id, content: inputMessage, fileIds: files.map((file) => file.id) },
       });
       const newMessage = await resMes.json();
@@ -60,13 +60,13 @@ const ChatInterface = () => {
       setInputMessage("");
       setFiles([]);
 
-      const resRun = await client.api.assistants.run_assistant.$post({
+      const resRun = await client.api.hono.assistants.run_assistant.$post({
         json: { threadId: thread.id, assistantId: selectedAssistant.id },
       });
       const run = await resRun.json();
       await pollRunStatus(thread.id, run.id);
 
-      const resMesList = await client.api.assistants.messages[":threadId"].$get({
+      const resMesList = await client.api.hono.assistants.messages[":threadId"].$get({
         param: { threadId: thread.id },
       });
       const threadMessages = await resMesList.json();
@@ -81,7 +81,7 @@ const ChatInterface = () => {
   const pollRunStatus = async (threadId: string, runId: string) => {
     let status: RunStatus = "queued";
     while (status !== "completed") {
-      const resRun = await client.api.assistants.get_run_status.$post({
+      const resRun = await client.api.hono.assistants.get_run_status.$post({
         json: { threadId, runId },
       });
       const run = await resRun.json();
@@ -106,7 +106,7 @@ const ChatInterface = () => {
     setError(null);
 
     try {
-      const res = await client.api.assistants.upload_file.$post({
+      const res = await client.api.hono.assistants.upload_file.$post({
         form: { file },
       });
       const uploadedFile = await res.json();
@@ -124,7 +124,7 @@ const ChatInterface = () => {
     const instructions = prompt("Enter assistant instructions:");
     if (name && description && instructions) {
       try {
-        const res = await client.api.assistants.create_assistant.$post({
+        const res = await client.api.hono.assistants.create_assistant.$post({
           json: { name, description, instructions },
         });
         const newAssistant = await res.json();
