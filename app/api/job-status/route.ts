@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 const getEventUrl = (jobId: string) => {
   const baseUrl =
     process.env.NODE_ENV === "development"
-      ? "http://127.0.0.1:8288/v1/events/{jobId}"
-      : "https://api.inngest.com/v1/events/{jobId}";
+      ? "http://127.0.0.1:8288/v1/events/{jobId}/runs"
+      : "https://api.inngest.com/v1/events/{jobId}/runs";
   return baseUrl.replace("{jobId}", jobId);
 };
 
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     });
     const event = await response.json();
     if (event) {
-      return NextResponse.json({ event });
+      return NextResponse.json({ status: event.data[0].status });
     } else {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });
     }
