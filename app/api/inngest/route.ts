@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
+import { inngest } from "@/app/lib/inngest";
+import { serve } from "inngest/next";
+import { processImage } from "./functions/process-images";
 
-export async function GET() {
-  return NextResponse.json({ message: "success" }, { status: 200 });
-}
+export const { GET, POST, PUT } = serve({ client: inngest, functions: [processImage] });
