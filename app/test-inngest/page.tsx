@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import ImageProcessingForm from "./ImageProcessingForm";
-import JobStatus from "./JobStatus";
+import ImageProcessingForm from "../components/ImageProcessingForm";
+import JobStatus from "../components/JobStatus";
 
 export default function TestInngest() {
   const [jobId, setJobId] = useState<string | null>(null);

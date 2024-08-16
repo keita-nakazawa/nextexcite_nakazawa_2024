@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 
+export const runtime = "nodejs";
+export const maxDuration = 60; // This function can run for a maximum of 60 seconds on Vercel
+
 const getEventUrl = (jobId: string) => {
   const baseUrl =
     process.env.NODE_ENV === "development"
