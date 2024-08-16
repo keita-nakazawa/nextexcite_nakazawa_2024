@@ -3,6 +3,7 @@ import { handle } from "hono/vercel";
 import { assistantsRoute } from "./routes/assistants";
 
 export const runtime = "nodejs";
+export const maxDuration = 60; // This function can run for a maximum of 60 seconds on Vercel
 
 const app = new Hono().basePath("/api/hono");
 // 各route(controller)を登録
