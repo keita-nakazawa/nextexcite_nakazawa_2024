@@ -1,49 +1,57 @@
 "use client";
 import { RunStatus } from "openai/resources/beta/threads/index.mjs";
 import { TextContentBlock } from "openai/resources/beta/threads/messages.mjs";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { AssistantType, FileObjectType, MessageType, ThreadType } from "../constants/type";
 import client from "../lib/client";
+import { supabase } from "../lib/supabase";
 
 const ChatInterface = () => {
   const [assistants, setAssistants] = useState<AssistantType[]>([]);
   const [selectedAssistant, setSelectedAssistant] = useState<AssistantType | null>(null);
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [inputMessage, setInputMessage] = useState("");
-  const [files, setFiles] = useState<FileObjectType[]>([]);
+  const [filesToUpload, setFilesToUpload] = useState<FileObjectType[]>([]);
+  const [threadFiles, setThreadFiles] = useState<FileObjectType[]>([]);
   const [thread, setThread] = useState<ThreadType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    createInitialAssistant();
-    createNewThread();
-  }, []);
+  const createAssistant = async (name: string, description: string, instructions: string) => {
+    setIsLoading(true);
 
-  const createInitialAssistant = async () => {
     try {
       const res = await client.api.hono.assistants.create_assistant.$post({
-        json: { name: "Default Assistant", description: "", instructions: "" },
+        json: { name, description, instructions },
       });
       const newAssistant = await res.json();
-      setAssistants([newAssistant]);
+      setAssistants((prevAssistants) => [...prevAssistants, newAssistant]);
       setSelectedAssistant(newAssistant);
     } catch (error) {
       setError("Failed to create initial assistant");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const createNewThread = async () => {
+  const createNewThread = useCallback(async () => {
+    if (!selectedAssistant) return;
+    setIsLoading(true);
+
     try {
       const res = await client.api.hono.assistants.create_thread.$post({
         json: {},
       });
       const thread = await res.json();
       setThread(thread);
+      setMessages([]);
+      await createSessionInDatabase(selectedAssistant.id, thread.id);
     } catch (error) {
       setError("Failed to create a new thread");
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [selectedAssistant]);
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || !thread || !selectedAssistant) return;
@@ -53,12 +61,12 @@ const ChatInterface = () => {
 
     try {
       const resMes = await client.api.hono.assistants.add_message.$post({
-        json: { threadId: thread.id, content: inputMessage, fileIds: files.map((file) => file.id) },
+        json: { threadId: thread.id, content: inputMessage, files: filesToUpload },
       });
       const newMessage = await resMes.json();
       setMessages([...messages, newMessage]);
       setInputMessage("");
-      setFiles([]);
+      setFilesToUpload([]);
 
       const resRun = await client.api.hono.assistants.run_assistant.$post({
         json: { threadId: thread.id, assistantId: selectedAssistant.id },
@@ -110,7 +118,7 @@ const ChatInterface = () => {
         form: { file },
       });
       const uploadedFile = await res.json();
-      setFiles([...files, uploadedFile]);
+      setFilesToUpload([...filesToUpload, uploadedFile]);
     } catch (error) {
       setError("Failed to upload file");
     } finally {
@@ -120,19 +128,75 @@ const ChatInterface = () => {
 
   const handleCreateAssistant = async () => {
     const name = prompt("Enter assistant name:");
-    const description = prompt("Enter assistant description:");
-    const instructions = prompt("Enter assistant instructions:");
-    if (name && description && instructions) {
+    const description = prompt("Enter assistant description:") ?? "";
+    const instructions = prompt("Enter assistant instructions:") ?? "";
+    if (name) {
       try {
-        const res = await client.api.hono.assistants.create_assistant.$post({
-          json: { name, description, instructions },
-        });
-        const newAssistant = await res.json();
-        setAssistants([...assistants, newAssistant]);
-        setSelectedAssistant(newAssistant);
+        await createAssistant(name, description, instructions);
       } catch (error) {
         setError("Failed to create new assistant");
       }
+    }
+  };
+
+  // createNewThread will be called automatically when selectedAssistant is changed
+  useEffect(() => {
+    if (selectedAssistant) {
+      createNewThread();
+    }
+  }, [selectedAssistant, createNewThread]);
+
+  // retrieve files for the current thread
+  useEffect(() => {
+    const retrieveNewFiles = async () => {
+      const newFileIds = messages.flatMap(
+        (message) =>
+          message.attachments
+            ?.map((attachment) => attachment.file_id)
+            .filter((id) => id !== undefined) || [],
+      );
+
+      const uniqueNewFileIds = Array.from(new Set(newFileIds));
+      const fileIdsToRetrieve = uniqueNewFileIds.filter(
+        (fileId) => !threadFiles.some((file) => file.id === fileId),
+      );
+
+      const newFiles = await Promise.all(
+        fileIdsToRetrieve.map(async (fileId) => {
+          try {
+            const res = await client.api.hono.assistants.retrieve_file[":fileId"].$get({
+              param: { fileId },
+            });
+            return await res.json();
+          } catch (error) {
+            console.error(`Failed to retrieve file ${fileId}:`, error);
+            return null;
+          }
+        }),
+      );
+
+      const validNewFiles = newFiles.filter((file) => file !== null);
+      setThreadFiles((prevFiles) => [...prevFiles, ...validNewFiles]);
+    };
+
+    retrieveNewFiles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages]);
+
+  const createSessionInDatabase = async (assistantId: string, threadId: string) => {
+    try {
+      const { data, error } = await supabase.from("openai_assistant_sessions").upsert(
+        { openai_assistant_id: assistantId, openai_thread_id: threadId },
+        {
+          onConflict: "openai_thread_id",
+        },
+      );
+
+      if (error) throw error;
+      console.log("Session created or updated:", data);
+    } catch (error) {
+      console.error("Error creating/updating session in database:", error);
+      setError("Failed to create/update session in database");
     }
   };
 
@@ -156,7 +220,10 @@ const ChatInterface = () => {
       <div className="message-list">
         {messages.map((message, index) => (
           <div key={index} className={`message ${message.role}`}>
-            {message.attachments?.map((attachment) => `${attachment.file_id}¥n`)}
+            {message.attachments?.map((attachment) => {
+              const file = threadFiles.find((f) => f.id === attachment.file_id);
+              return file ? `📂${file.filename}\n` : `unknown file id: ${attachment.file_id}\n`;
+            })}
             {(message.content[0] as TextContentBlock).text.value}
           </div>
         ))}
@@ -168,12 +235,12 @@ const ChatInterface = () => {
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           placeholder="Type your message..."
-          disabled={isLoading}
+          disabled={isLoading || !selectedAssistant}
         />
-        <button onClick={handleSendMessage} disabled={isLoading}>
+        <button onClick={handleSendMessage} disabled={isLoading || !selectedAssistant}>
           Send
         </button>
-        <input type="file" onChange={handleFileUpload} disabled={isLoading} />{" "}
+        <input type="file" onChange={handleFileUpload} disabled={isLoading || !selectedAssistant} />{" "}
         {/* なんかEdgeだと反応しない場合がある？ */}
       </div>
       {isLoading && <div className="loading">Loading...</div>}
