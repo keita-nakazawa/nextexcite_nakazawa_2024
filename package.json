@@ -12,7 +12,6 @@
   "dependencies": {
     "@hono/zod-validator": "^0.2.2",
     "hono": "^4.5.2",
-    "inngest": "^3.22.3",
     "next": "14.2.5",
     "openai": "^4.53.2",
     "react": "^18",
@@ -30,7 +29,6 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
     "eslint-plugin-tailwindcss": "^3.17.4",
-    "inngest-cli": "^0.29.4",
     "postcss": "^8",
     "prettier": "^3.3.3",
     "tailwind-variants": "^0.2.1",
