@@ -17,6 +17,59 @@ const ChatInterface = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    // リアルタイム更新のサブスクライブのテスト
+    const channel1 = supabase
+      .channel("channel1")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "openai_assistant_sessions" },
+        (payload) => {
+          console.log("Table Change received!", payload);
+        },
+      )
+      .subscribe();
+
+    const channel2 = supabase
+      .channel("channel2", {
+        config: {
+          broadcast: { self: true },
+        },
+      })
+      // self: trueだけどなんかpayload表示されない...
+      .on("broadcast", { event: "test_broadcast" }, (payload) => console.log(payload))
+      .subscribe();
+
+    // クリーンアップ関数
+    return () => {
+      console.log("Unsubscribing started");
+      channel1.unsubscribe();
+      channel2.unsubscribe();
+      console.log("Unsubscribing ended");
+    };
+  }, []);
+
+  const testBroadcast = async (testMessage: string) => {
+    const channel2 = supabase.channel("channel2", {
+      config: {
+        broadcast: { self: true, ack: true },
+      },
+    });
+
+    channel2.subscribe(async (status) => {
+      if (status !== "SUBSCRIBED") {
+        return;
+      }
+      const sendResponse = await channel2.send({
+        type: "broadcast",
+        event: "test_broadcast",
+        payload: { message: testMessage },
+      });
+
+      console.log("serverResponse", sendResponse);
+    });
+  };
+
   const createAssistant = async (name: string, description: string, instructions: string) => {
     setIsLoading(true);
 
@@ -244,6 +297,13 @@ const ChatInterface = () => {
         {/* なんかEdgeだと反応しない場合がある？ */}
       </div>
       {isLoading && <div className="loading">Loading...</div>}
+      <button
+        onClick={() => {
+          testBroadcast(inputMessage);
+        }}
+      >
+        Test Broadcast
+      </button>
     </div>
   );
 };
