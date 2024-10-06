@@ -43,8 +43,11 @@ const ChatInterface = () => {
     // クリーンアップ関数
     return () => {
       console.log("Unsubscribing started");
-      channel1.unsubscribe();
-      channel2.unsubscribe();
+      supabase.removeChannel(channel1);
+      supabase.removeChannel(channel2);
+      // removeChannelは内部でunsubscribeを呼ぶので不要
+      // channel1.unsubscribe();
+      // channel2.unsubscribe();
       console.log("Unsubscribing ended");
     };
   }, []);
