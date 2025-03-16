@@ -2,7 +2,7 @@ import "reflect-metadata";
 
 import { testClient } from "hono/testing";
 import { container } from "tsyringe";
-import { app } from "../app";
+import { app } from "../../app";
 import { AssistantsService } from "../services/assistants";
 import { MockAssistantsService, mockFileObject } from "../services/assistants.mock";
 

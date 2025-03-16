@@ -2,7 +2,7 @@ import "reflect-metadata";
 
 import { Hono } from "hono";
 import { container } from "tsyringe";
-import { AssistantsController } from "./routes/assistants";
+import { AssistantsController } from "./main/routes/assistants";
 
 const honoApp = new Hono().basePath("/api");
 
