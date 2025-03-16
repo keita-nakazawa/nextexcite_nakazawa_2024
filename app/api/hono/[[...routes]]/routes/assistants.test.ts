@@ -1,36 +1,31 @@
 import "reflect-metadata";
 
-import { FileObjectType } from "@/app/constants/type";
 import { testClient } from "hono/testing";
 import { container } from "tsyringe";
 import { app } from "../app";
 import { AssistantsService } from "../services/assistants";
+import { MockAssistantsService, mockFileObject } from "../services/assistants.mock";
 
-// mockの用意
-const mockFileObject: FileObjectType = {
-  id: "test",
-  bytes: 1,
-  created_at: 1,
-  filename: "test",
-  object: "file",
-  purpose: "assistants",
-  status: "uploaded",
-};
-const mockService: Partial<AssistantsService> = {
-  retrieveFile: jest.fn().mockResolvedValue(mockFileObject),
-};
-
-// mockのDI
-container.register(AssistantsService, { useValue: mockService });
-const testApp = app();
+let testApp: ReturnType<typeof app>;
 
 describe("AssistantsController Unit Tests", () => {
+  beforeAll(() => {
+    // Set up DI container before tests
+    container.register(AssistantsService, { useClass: MockAssistantsService });
+    testApp = app();
+  });
+
+  afterAll(() => {
+    // Clean up DI container after tests
+    container.reset();
+  });
+
   it("should retrieve a file", async () => {
     const res = await testClient(testApp).api.main.assistants.retrieve_file2[":fileId"].$get({
       param: { fileId: "test" },
     });
-    const json = await res.json();
     expect(res.status).toBe(200);
+    const json = await res.json();
     expect(json).toEqual(mockFileObject);
   });
 });
