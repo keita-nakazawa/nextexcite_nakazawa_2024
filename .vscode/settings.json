@@ -13,5 +13,7 @@
     ["tv\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"] // tv()内の文字列に対して補完
     // ["([\"'`][^\"'`]*.*?[\"'`])", "[\"'`]([^\"'`]*).*?[\"'`]"],  //すべての文字列に対して補完
   ],
+  "typescript.preferences.preferTypeOnlyAutoImports": true,
+
   "python.analysis.typeCheckingMode": "basic"
 }

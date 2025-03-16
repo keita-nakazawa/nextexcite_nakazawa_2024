@@ -1,5 +1,5 @@
-import type { AppType } from "@/app/api/hono/[[...routes]]/route";
 import { hc } from "hono/client";
+import type { AppType } from "../api/hono/[[...routes]]/app";
 
 const client = hc<AppType>("");
 
@@ -10,6 +10,7 @@ const client = hc<AppType>("");
  *   cache: "no-cache",
  * });
  */
-export const createClient = (init?: RequestInit) => hc<AppType>("", { init });
+export const createClient = (init?: RequestInit) =>
+  init ? hc<AppType>("", { init }) : hc<AppType>("");
 
 export default client;

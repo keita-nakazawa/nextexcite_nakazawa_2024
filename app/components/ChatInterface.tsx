@@ -236,7 +236,6 @@ const ChatInterface = () => {
     };
 
     retrieveNewFiles();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages]);
 
   const createSessionInDatabase = async (assistantId: string, threadId: string) => {

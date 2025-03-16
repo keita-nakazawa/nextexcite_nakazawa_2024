@@ -47,7 +47,7 @@ function AIChatHistory() {
 
   const fetchAssistantDetails = async (assistantId: string) => {
     try {
-      const res = await client.api.hono.assistants.retrieve_assistant[":assistantId"].$get({
+      const res = await client.api.main.assistants.retrieve_assistant[":assistantId"].$get({
         param: { assistantId },
       });
       return await res.json();
@@ -59,7 +59,7 @@ function AIChatHistory() {
 
   const fetchFirstMessage = async (threadId: string) => {
     try {
-      const res = await client.api.hono.assistants.first_message[":threadId"].$get({
+      const res = await client.api.main.assistants.first_message[":threadId"].$get({
         param: { threadId },
       });
       const message = await res.json();

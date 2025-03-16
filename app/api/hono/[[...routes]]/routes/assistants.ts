@@ -5,121 +5,94 @@ import {
   RunType,
   ThreadType,
 } from "@/app/constants/type";
-import { zValidator } from "@hono/zod-validator";
-import { Hono } from "hono";
-import { createFactory } from "hono/factory";
+import { Hono, type Context } from "hono";
+import { inject, injectable } from "tsyringe";
 import * as schemas from "../schemas/assistants";
-import * as openaiService from "../services/openai-service";
+import { AssistantsService } from "../services/assistants";
 
-const factory = createFactory();
+@injectable()
+export class AssistantsController {
+  constructor(@inject(AssistantsService) private service: AssistantsService) {}
 
-const createAssistant = factory.createHandlers(
-  zValidator("json", schemas.createAssistantReqSchema),
-  async (c) => {
-    const { name, description, instructions, model } = c.req.valid("json");
-    const assistant = await openaiService.createAssistant(name, description, instructions, model);
-    const response = assistant as AssistantType;
+  private createAssistant = async (c: Context) => {
+    const { name, description, instructions, model } = schemas.createAssistantReqSchema.parse(
+      await c.req.json(),
+    );
+    const assistant = await this.service.createAssistant(name, description, instructions, model);
+    return c.json(assistant as AssistantType);
+  };
+
+  private retrieveAssistant = async (c: Context) => {
+    const { assistantId } = schemas.retrieveAssistantReqSchema.parse(c.req.param());
+    const assistant = await this.service.retrieveAssistant(assistantId);
+    return c.json(assistant as AssistantType);
+  };
+
+  private createThread = async (c: Context) => {
+    const thread = await this.service.createThread();
+    return c.json(thread as ThreadType);
+  };
+
+  private addMessage = async (c: Context) => {
+    const { threadId, content, files } = schemas.addMessageReqSchema.parse(await c.req.json());
+    const message = await this.service.addMessage(threadId, content, files);
+    return c.json(message as MessageType);
+  };
+
+  private runAssistant = async (c: Context) => {
+    const { assistantId, threadId } = schemas.runAssistantReqSchema.parse(await c.req.json());
+    const run = await this.service.runAssistant(assistantId, threadId);
+    return c.json(run as RunType);
+  };
+
+  private getRunStatus = async (c: Context) => {
+    const { threadId, runId } = schemas.getRunStatusReqSchema.parse(await c.req.json());
+    const run = await this.service.getRunStatus(threadId, runId);
+    return c.json(run as RunType);
+  };
+
+  private getMessages = async (c: Context) => {
+    const { threadId } = schemas.getMessagesReqSchema.parse(c.req.param());
+    const messages = await this.service.getMessages(threadId);
+    return c.json(messages as MessageType[]);
+  };
+
+  private getFirstMessage = async (c: Context) => {
+    const { threadId } = schemas.getFirstMessageReqSchema.parse(c.req.param());
+    const messages = await this.service.getMessages(threadId);
+    return c.json(messages[0] as MessageType);
+  };
+
+  private uploadAssistantsFile = async (c: Context) => {
+    const { file } = schemas.uploadFileReqSchema.parse(await c.req.parseBody());
+    const fileObject = await this.service.uploadAssistantsFile(file);
+    return c.json(fileObject as FileObjectType);
+  };
+
+  private retrieveFile = async (c: Context) => {
+    const param = schemas.retrieveFileReqSchema.parse(c.req.param());
+    const fileObject = await this.service.retrieveFile(param);
+    return c.json(fileObject);
+  };
+
+  private retrieveFile2 = async (c: Context) => {
+    const param = schemas.retrieveFileReqSchema.parse(c.req.param());
+    const response = await this.service.retrieveFile(param);
     return c.json(response);
-  },
-);
+  };
 
-const retrieveAssistant = factory.createHandlers(
-  zValidator("param", schemas.retrieveAssistantReqSchema),
-  async (c) => {
-    const { assistantId } = c.req.valid("param");
-    const assistant = await openaiService.retrieveAssistant(assistantId);
-    const response = assistant as AssistantType;
-    return c.json(response);
-  },
-);
-
-const createThread = factory.createHandlers(async (c) => {
-  const thread = await openaiService.createThread();
-  const response = thread as ThreadType;
-  return c.json(response);
-});
-
-const addMessage = factory.createHandlers(
-  zValidator("json", schemas.addMessageReqSchema),
-  async (c) => {
-    const { threadId, content, files } = c.req.valid("json");
-    const message = await openaiService.addMessage(threadId, content, files);
-    const response = message as MessageType;
-    return c.json(response);
-  },
-);
-
-const runAssistant = factory.createHandlers(
-  zValidator("json", schemas.runAssistantReqSchema),
-  async (c) => {
-    const { assistantId, threadId } = c.req.valid("json");
-    const run = await openaiService.runAssistant(assistantId, threadId);
-    const response = run as RunType;
-    return c.json(response);
-  },
-);
-
-const getRunStatus = factory.createHandlers(
-  zValidator("json", schemas.getRunStatusReqSchema),
-  async (c) => {
-    const { threadId, runId } = c.req.valid("json");
-    const run = await openaiService.getRunStatus(threadId, runId);
-    const response = run as RunType;
-    return c.json(response);
-  },
-);
-
-const getMessages = factory.createHandlers(
-  zValidator("param", schemas.getMessagesReqSchema),
-  async (c) => {
-    const { threadId } = c.req.valid("param");
-    const messages = await openaiService.getMessages(threadId);
-    const response = messages as MessageType[];
-    return c.json(response);
-  },
-);
-
-const getFirstMessage = factory.createHandlers(
-  zValidator("param", schemas.getFirstMessageReqSchema),
-  async (c) => {
-    const { threadId } = c.req.valid("param");
-    const messages = await openaiService.getMessages(threadId);
-    const response = messages[0] as MessageType;
-    return c.json(response);
-  },
-);
-
-const uploadAssistantsFile = factory.createHandlers(
-  zValidator("form", schemas.uploadFileReqSchema),
-  async (c) => {
-    const { file } = c.req.valid("form");
-    const fileObject = await openaiService.uploadAssistantsFile(file);
-    const response = fileObject as FileObjectType;
-    return c.json(response);
-  },
-);
-
-const retrieveFile = factory.createHandlers(
-  zValidator("param", schemas.retrieveFileReqSchema),
-  async (c) => {
-    const { fileId } = c.req.valid("param");
-    const fileObject = await openaiService.retrieveFile(fileId);
-    const response = fileObject as FileObjectType;
-    return c.json(response);
-  },
-);
-
-// assistants api用のエンドポイントを設定
-const app = new Hono()
-  .post("/create_assistant", ...createAssistant)
-  .get("/retrieve_assistant/:assistantId", ...retrieveAssistant)
-  .post("/create_thread", ...createThread)
-  .post("/add_message", ...addMessage)
-  .post("/run_assistant", ...runAssistant)
-  .post("/get_run_status", ...getRunStatus)
-  .get("/messages/:threadId", ...getMessages)
-  .get("/first_message/:threadId", ...getFirstMessage)
-  .post("/upload_file", ...uploadAssistantsFile)
-  .get("/retrieve_file/:fileId", ...retrieveFile);
-
-export const assistantsRoute = app;
+  public get app() {
+    return new Hono()
+      .post("/create_assistant", this.createAssistant)
+      .get("/retrieve_assistant/:assistantId", this.retrieveAssistant)
+      .post("/create_thread", this.createThread)
+      .post("/add_message", this.addMessage)
+      .post("/run_assistant", this.runAssistant)
+      .post("/get_run_status", this.getRunStatus)
+      .get("/messages/:threadId", this.getMessages)
+      .get("/first_message/:threadId", this.getFirstMessage)
+      .post("/upload_file", this.uploadAssistantsFile)
+      .get("/retrieve_file/:fileId", this.retrieveFile)
+      .get("/retrieve_file2/:fileId", this.retrieveFile2);
+  }
+}
