@@ -7,7 +7,7 @@ import { FileObjectType } from "@/app/constants/type";
 import OpenAI from "openai";
 import { injectable } from "tsyringe";
 import { z } from "zod";
-import * as schemas from "../schemas/assistants";
+import * as schemas from "./req-res-schema";
 
 export const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "test",

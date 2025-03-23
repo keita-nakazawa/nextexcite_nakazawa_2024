@@ -14,6 +14,8 @@
     // ["([\"'`][^\"'`]*.*?[\"'`])", "[\"'`]([^\"'`]*).*?[\"'`]"],  //すべての文字列に対して補完
   ],
   "typescript.preferences.preferTypeOnlyAutoImports": true,
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
 
   "python.analysis.typeCheckingMode": "basic"
 }

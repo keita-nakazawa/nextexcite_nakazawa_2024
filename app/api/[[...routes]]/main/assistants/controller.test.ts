@@ -2,17 +2,17 @@ import "reflect-metadata";
 
 import { testClient } from "hono/testing";
 import { container } from "tsyringe";
-import { app } from "../../app";
-import { AssistantsService } from "../services/assistants";
-import { MockAssistantsService, mockFileObject } from "../services/assistants.mock";
+import { setupMainRoutes } from "../../app";
+import { AssistantsService } from "./service";
+import { MockAssistantsService, mockFileObject } from "./service.mock";
 
-let testApp: ReturnType<typeof app>;
+let testApp: ReturnType<typeof setupMainRoutes>;
 
 describe("AssistantsController Unit Tests", () => {
   beforeAll(() => {
     // Set up DI container before tests
     container.register(AssistantsService, { useClass: MockAssistantsService });
-    testApp = app();
+    testApp = setupMainRoutes();
   });
 
   afterAll(() => {

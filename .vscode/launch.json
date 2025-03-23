@@ -5,6 +5,22 @@
   "version": "0.2.0",
   "configurations": [
     {
+      // https://nextjs.org/docs/app/building-your-application/configuring/debugging
+      "name": "Next.js: debug full stack",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/.bin/next",
+      "runtimeArgs": ["--inspect"],
+      "skipFiles": ["<node_internals>/**"],
+      "serverReadyAction": {
+        "action": "debugWithEdge",
+        "killOnServerStop": true,
+        "pattern": "- Local:.+(https?://.+)",
+        "uriFormat": "%s",
+        "webRoot": "${workspaceFolder}"
+      }
+    },
+    {
       // Edge client side debug (npm run debug後に実行)
       "type": "msedge",
       "request": "launch",
@@ -25,10 +41,8 @@
       "type": "node",
       "request": "attach",
       "name": "Nextjs: Server",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
+      "skipFiles": ["<node_internals>/**"],
       "port": 9229
-    },
+    }
   ]
 }

@@ -9,8 +9,8 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { createFactory } from "hono/factory";
 import { inject, injectable } from "tsyringe";
-import * as schemas from "../schemas/assistants";
-import { AssistantsService } from "../services/assistants";
+import * as schemas from "./req-res-schema";
+import { AssistantsService } from "./service";
 
 @injectable()
 export class AssistantsController {

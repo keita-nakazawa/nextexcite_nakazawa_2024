@@ -6,7 +6,7 @@ import { AssistantType, FileObjectType, MessageType, ThreadType } from "../const
 import client from "../lib/client";
 import { supabase } from "../lib/supabase";
 
-const ChatInterface = () => {
+export default function ChatInterface() {
   const [assistants, setAssistants] = useState<AssistantType[]>([]);
   const [selectedAssistant, setSelectedAssistant] = useState<AssistantType | null>(null);
   const [messages, setMessages] = useState<MessageType[]>([]);
@@ -17,67 +17,11 @@ const ChatInterface = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // リアルタイム更新のサブスクライブのテスト
-    const channel1 = supabase
-      .channel("channel1")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "openai_assistant_sessions" },
-        (payload) => {
-          console.log("Table Change received!", payload);
-        },
-      )
-      .subscribe();
-
-    const channel2 = supabase
-      .channel("channel2", {
-        config: {
-          broadcast: { self: true },
-        },
-      })
-      // self: trueだけどなんかpayload表示されない...
-      .on("broadcast", { event: "test_broadcast" }, (payload) => console.log(payload))
-      .subscribe();
-
-    // クリーンアップ関数
-    return () => {
-      console.log("Unsubscribing started");
-      supabase.removeChannel(channel1);
-      supabase.removeChannel(channel2);
-      // removeChannelは内部でunsubscribeを呼ぶので不要
-      // channel1.unsubscribe();
-      // channel2.unsubscribe();
-      console.log("Unsubscribing ended");
-    };
-  }, []);
-
-  const testBroadcast = async (testMessage: string) => {
-    const channel2 = supabase.channel("channel2", {
-      config: {
-        broadcast: { self: true, ack: true },
-      },
-    });
-
-    channel2.subscribe(async (status) => {
-      if (status !== "SUBSCRIBED") {
-        return;
-      }
-      const sendResponse = await channel2.send({
-        type: "broadcast",
-        event: "test_broadcast",
-        payload: { message: testMessage },
-      });
-
-      console.log("serverResponse", sendResponse);
-    });
-  };
-
   const createAssistant = async (name: string, description: string, instructions: string) => {
     setIsLoading(true);
 
     try {
-      const res = await client.api.hono.assistants.create_assistant.$post({
+      const res = await client.api.main.assistants.create_assistant.$post({
         json: { name, description, instructions },
       });
       const newAssistant = await res.json();
@@ -95,7 +39,7 @@ const ChatInterface = () => {
     setIsLoading(true);
 
     try {
-      const res = await client.api.hono.assistants.create_thread.$post({
+      const res = await client.api.main.assistants.create_thread.$post({
         json: {},
       });
       const thread = await res.json();
@@ -116,7 +60,7 @@ const ChatInterface = () => {
     setError(null);
 
     try {
-      const resMes = await client.api.hono.assistants.add_message.$post({
+      const resMes = await client.api.main.assistants.add_message.$post({
         json: { threadId: thread.id, content: inputMessage, files: filesToUpload },
       });
       const newMessage = await resMes.json();
@@ -124,13 +68,13 @@ const ChatInterface = () => {
       setInputMessage("");
       setFilesToUpload([]);
 
-      const resRun = await client.api.hono.assistants.run_assistant.$post({
+      const resRun = await client.api.main.assistants.run_assistant.$post({
         json: { threadId: thread.id, assistantId: selectedAssistant.id },
       });
       const run = await resRun.json();
       await pollRunStatus(thread.id, run.id);
 
-      const resMesList = await client.api.hono.assistants.messages[":threadId"].$get({
+      const resMesList = await client.api.main.assistants.messages[":threadId"].$get({
         param: { threadId: thread.id },
       });
       const threadMessages = await resMesList.json();
@@ -145,7 +89,7 @@ const ChatInterface = () => {
   const pollRunStatus = async (threadId: string, runId: string) => {
     let status: RunStatus = "queued";
     while (status !== "completed") {
-      const resRun = await client.api.hono.assistants.get_run_status.$post({
+      const resRun = await client.api.main.assistants.get_run_status.$post({
         json: { threadId, runId },
       });
       const run = await resRun.json();
@@ -170,7 +114,7 @@ const ChatInterface = () => {
     setError(null);
 
     try {
-      const res = await client.api.hono.assistants.upload_file.$post({
+      const res = await client.api.main.assistants.upload_file.$post({
         form: { file },
       });
       const uploadedFile = await res.json();
@@ -220,7 +164,7 @@ const ChatInterface = () => {
       const newFiles = await Promise.all(
         fileIdsToRetrieve.map(async (fileId) => {
           try {
-            const res = await client.api.hono.assistants.retrieve_file[":fileId"].$get({
+            const res = await client.api.main.assistants.retrieve_file[":fileId"].$get({
               param: { fileId },
             });
             return await res.json();
@@ -299,15 +243,6 @@ const ChatInterface = () => {
         {/* なんかEdgeだと反応しない場合がある？ */}
       </div>
       {isLoading && <div className="loading">Loading...</div>}
-      <button
-        onClick={() => {
-          testBroadcast(inputMessage);
-        }}
-      >
-        Test Broadcast
-      </button>
     </div>
   );
-};
-
-export default ChatInterface;
+}

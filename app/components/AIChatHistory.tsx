@@ -11,7 +11,7 @@ type ChatSession = {
   first_message: string;
 };
 
-function AIChatHistory() {
+export default function AIChatHistory() {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
 
   useEffect(() => {
@@ -87,5 +87,3 @@ function AIChatHistory() {
     </div>
   );
 }
-
-export default AIChatHistory;

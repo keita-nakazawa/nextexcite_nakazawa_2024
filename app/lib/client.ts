@@ -1,5 +1,5 @@
 import { hc } from "hono/client";
-import type { AppType } from "../api/hono/[[...routes]]/app";
+import type { AppType } from "../api/[[...routes]]/app";
 
 const client = hc<AppType>("");
 
