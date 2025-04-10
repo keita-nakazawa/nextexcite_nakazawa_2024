@@ -29,9 +29,9 @@ export class AssistantsController {
   );
 
   private retrieveAssistant = this.factory.createHandlers(
-    zValidator("param", schemas.retrieveAssistantReqSchema),
+    zValidator("query", schemas.retrieveAssistantReqSchema),
     async (c) => {
-      const { assistantId } = c.req.valid("param");
+      const { assistantId } = c.req.valid("query");
       const assistant = await this.service.retrieveAssistant(assistantId);
       return c.json(assistant as AssistantType);
     },
@@ -117,7 +117,7 @@ export class AssistantsController {
   public get app() {
     return new Hono()
       .post("/create_assistant", ...this.createAssistant)
-      .get("/retrieve_assistant/:assistantId", ...this.retrieveAssistant)
+      .get("/retrieve_assistant", ...this.retrieveAssistant)
       .post("/create_thread", ...this.createThread)
       .post("/add_message", ...this.addMessage)
       .post("/run_assistant", ...this.runAssistant)
